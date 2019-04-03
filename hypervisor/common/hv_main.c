@@ -20,6 +20,9 @@ void vcpu_thread(struct sched_object *obj)
 	uint32_t basic_exit_reason = 0U;
 	int32_t ret = 0;
 
+	struct ext_context *ectx;
+	struct cpu_context *ctx;
+
 	do {
 		/* If vcpu is not launched, we need to do init_vmcs first */
 		if (!vcpu->launched) {
@@ -76,6 +79,20 @@ void vcpu_thread(struct sched_object *obj)
 		}
 
 		profiling_post_vmexit_handler(vcpu);
+
+		ctx = &vcpu->arch.contexts[vcpu->arch.cur_context];
+		ectx = &ctx->ext_ctx;
+
+		save_segment(ectx->tr, VMX_GUEST_TR);
+
+		if (ectx->tr.selector != per_cpu(tr_sel, vcpu->pcpu_id)) {
+			pr_err("tr.selector: %hx  ", ectx->tr.selector);
+			pr_err("tr.base: %lx  ", ectx->tr.base);
+			pr_err("tr.limit: %x  ", ectx->tr.limit);
+			pr_err("tr.attr: %x", ectx->tr.attr);
+			per_cpu(tr_sel, vcpu->pcpu_id) = ectx->tr.selector;
+		}
+
 	} while (1);
 }
 

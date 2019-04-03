@@ -52,6 +52,7 @@ struct per_cpu_region {
 #ifdef PROFILING_ON
 	struct profiling_info_wrapper profiling_info;
 #endif
+	uint32_t tr_sel;
 } __aligned(PAGE_SIZE); /* per_cpu_region size aligned with PAGE_SIZE */
 
 extern struct per_cpu_region per_cpu_data[CONFIG_MAX_PCPU_NUM];
