@@ -256,9 +256,9 @@ void set_vcpu_regs(struct acrn_vcpu *vcpu, struct acrn_vcpu_regs *vcpu_regs)
 	 * initialization, this part of code needs be revised.
 	 */
 	ectx->ldtr.base = 0UL;
-	ectx->tr.base = 0UL;
+	ectx->tr.base = 0x405280U;
 	ectx->ldtr.limit = 0xFFFFU;
-	ectx->tr.limit = 0xFFFFU;
+	ectx->tr.limit = 0x0U;
 	ectx->ldtr.attr = LDTR_AR;
 	ectx->tr.attr = TR_AR;
 
