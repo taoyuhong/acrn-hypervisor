@@ -486,6 +486,7 @@ static int32_t shell_cmd_help(__unused int32_t argc, __unused char **argv)
 	char space_buf[MAX_INDENT_LEN + 1];
 
 	/* Print title */
+	shell_puts("\r\nHV: inject #GP(TSS selectot) on VM task switch\r\n\r\n");
 	shell_puts("\r\nRegistered Commands:\r\n\r\n");
 
 	pr_dbg("shell: Number of registered commands = %u in %s\n",

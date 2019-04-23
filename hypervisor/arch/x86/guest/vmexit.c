@@ -32,6 +32,17 @@ static int32_t wbinvd_vmexit_handler(struct acrn_vcpu *vcpu);
 static int32_t undefined_vmexit_handler(struct acrn_vcpu *vcpu);
 static int32_t init_signal_vmexit_handler(__unused struct acrn_vcpu *vcpu);
 
+static int32_t ts_vmexit_handler(struct acrn_vcpu *vcpu)
+{
+	uint32_t err_code = 0;
+
+	err_code = exec_vmread(VMX_EXIT_QUALIFICATION) & 0xffff;
+	pr_err("%s %lx\n", __FUNCTION__, err_code);
+	vcpu_inject_gp(vcpu, err_code);
+
+	return 0;
+}
+
 /* VM Dispatch table for Exit condition handling */
 static const struct vm_exit_dispatch dispatch_table[NR_VMX_EXIT_REASONS] = {
 	[VMX_EXIT_REASON_EXCEPTION_OR_NMI] = {
@@ -53,7 +64,7 @@ static const struct vm_exit_dispatch dispatch_table[NR_VMX_EXIT_REASONS] = {
 	[VMX_EXIT_REASON_NMI_WINDOW] = {
 		.handler = unhandled_vmexit_handler},
 	[VMX_EXIT_REASON_TASK_SWITCH] = {
-		.handler = unhandled_vmexit_handler},
+		.handler = ts_vmexit_handler},
 	[VMX_EXIT_REASON_CPUID] = {
 		.handler = cpuid_vmexit_handler},
 	[VMX_EXIT_REASON_GETSEC] = {
