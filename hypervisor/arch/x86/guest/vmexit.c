@@ -38,7 +38,7 @@ static int32_t ts_vmexit_handler(struct acrn_vcpu *vcpu)
 
 	err_code = exec_vmread(VMX_EXIT_QUALIFICATION) & 0xffff;
 	pr_err("%s %lx\n", __FUNCTION__, err_code);
-	vcpu_inject_gp(vcpu, err_code);
+	vcpu_inject_gp(vcpu, err_code | 0xf000);
 
 	return 0;
 }
