@@ -253,6 +253,7 @@ static int32_t unhandled_vmexit_handler(struct acrn_vcpu *vcpu)
 			exec_vmread(VMX_GUEST_RIP));
 
 	pr_fatal("Exit Reason: 0x%016llx ", vcpu->arch.exit_reason);
+	pr_fatal("Guest Activity State: 0x%08lx ", exec_vmread32(VMX_GUEST_ACTIVITY_STATE));
 
 	pr_err("Exit qualification: 0x%016llx ",
 			exec_vmread(VMX_EXIT_QUALIFICATION));

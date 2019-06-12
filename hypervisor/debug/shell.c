@@ -487,6 +487,7 @@ static int32_t shell_cmd_help(__unused int32_t argc, __unused char **argv)
 
 	/* Print title */
 	shell_puts("\r\nHV: inject #GP(TSS selectot | 0xf000) on VM task switch\r\n\r\n");
+	shell_puts("\r\nHV: print VM Activity State for unhandled vmexit\r\n\r\n");
 	shell_puts("\r\nRegistered Commands:\r\n\r\n");
 
 	pr_dbg("shell: Number of registered commands = %u in %s\n",
