@@ -35,6 +35,8 @@ static int32_t shell_cmd_help(__unused int32_t argc, __unused char **argv);
 static int32_t shell_list_vm(__unused int32_t argc, __unused char **argv);
 static int32_t shell_list_vcpu(__unused int32_t argc, __unused char **argv);
 static int32_t shell_vcpu_dumpreg(int32_t argc, char **argv);
+static int32_t shell_vcpu_inject(int32_t argc, char **argv);
+static int32_t shell_vcpu_vmread(int32_t argc, char **argv);
 static int32_t shell_dumpmem(int32_t argc, char **argv);
 static int32_t shell_to_vm_console(int32_t argc, char **argv);
 static int32_t shell_show_cpu_int(__unused int32_t argc, __unused char **argv);
@@ -71,6 +73,18 @@ static struct shell_cmd shell_cmds[] = {
 		.cmd_param	= SHELL_CMD_VCPU_DUMPREG_PARAM,
 		.help_str	= SHELL_CMD_VCPU_DUMPREG_HELP,
 		.fcn		= shell_vcpu_dumpreg,
+	},
+	{
+		.str		= "inject",
+		.cmd_param	= SHELL_CMD_VCPU_DUMPREG_PARAM,
+		.help_str	= "inject nmi: inject <vm_id, vcpu_id>",
+		.fcn		= shell_vcpu_inject,
+	},
+	{
+		.str		= "vmread",
+		.cmd_param	= SHELL_CMD_VCPU_DUMPREG_PARAM,
+		.help_str	= "vmread <field>",
+		.fcn		= shell_vcpu_vmread,
 	},
 	{
 		.str		= SHELL_CMD_DUMPMEM,
@@ -488,6 +502,8 @@ static int32_t shell_cmd_help(__unused int32_t argc, __unused char **argv)
 	/* Print title */
 	shell_puts("\r\nHV: inject #GP(TSS selectot | 0xf000) on VM task switch\r\n\r\n");
 	shell_puts("\r\nHV: print VM Activity State for unhandled vmexit\r\n\r\n");
+	shell_puts("\r\nHV: cmd inject nmi\r\n\r\n");
+	shell_puts("\r\nHV: cmd vmread\r\n\r\n");
 	shell_puts("\r\nRegistered Commands:\r\n\r\n");
 
 	pr_dbg("shell: Number of registered commands = %u in %s\n",
@@ -797,6 +813,69 @@ static int32_t shell_vcpu_dumpreg(int32_t argc, char **argv)
 	shell_puts(shell_log_buf);
 	status = 0;
 
+out:
+	return status;
+}
+
+static int32_t shell_vcpu_vmread(int32_t argc, char **argv)
+{
+	uint32_t field = 0;
+	uint64_t val;
+
+	if (argc != 2) {
+		return -EINVAL;
+	}
+
+	field = strtoul_hex(argv[1]);
+	val = exec_vmread64(field);
+
+	printf("vmread(0x%x):0x%llu\n", field, val);
+	return 0;
+}
+
+static int32_t shell_vcpu_inject(int32_t argc, char **argv)
+{
+	int32_t status = 0;
+	uint16_t vm_id;
+	uint16_t vcpu_id;
+	struct acrn_vm *vm;
+	struct acrn_vcpu *vcpu;
+
+	/* User input invalidation */
+	if (argc != 3) {
+		shell_puts("Please enter cmd with <vm_id, vcpu_id>\r\n");
+		status = -EINVAL;
+		goto out;
+	}
+
+	status = strtol_deci(argv[1]);
+	if (status < 0) {
+		goto out;
+	}
+	vm_id = sanitize_vmid((uint16_t)status);
+	vcpu_id = (uint16_t)strtol_deci(argv[2]);
+
+	vm = get_vm_from_vmid(vm_id);
+	if (is_poweroff_vm(vm)) {
+		shell_puts("No vm found in the input <vm_id, vcpu_id>\r\n");
+		status = -EINVAL;
+		goto out;
+	}
+
+	if (vcpu_id >= vm->hw.created_vcpus) {
+		shell_puts("vcpu id is out of range\r\n");
+		status = -EINVAL;
+		goto out;
+	}
+
+	vcpu = vcpu_from_vid(vm, vcpu_id);
+	if (vcpu->state == VCPU_OFFLINE) {
+		shell_puts("vcpu is offline\r\n");
+		status = -EINVAL;
+		goto out;
+	}
+
+	vcpu_inject_nmi(vcpu);
 out:
 	return status;
 }
