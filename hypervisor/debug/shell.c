@@ -37,6 +37,7 @@ static int32_t shell_list_vcpu(__unused int32_t argc, __unused char **argv);
 static int32_t shell_vcpu_dumpreg(int32_t argc, char **argv);
 static int32_t shell_vcpu_inject(int32_t argc, char **argv);
 static int32_t shell_vcpu_vmread(int32_t argc, char **argv);
+static int32_t shell_vcpu_vmwrite(int32_t argc, char **argv);
 static int32_t shell_dumpmem(int32_t argc, char **argv);
 static int32_t shell_to_vm_console(int32_t argc, char **argv);
 static int32_t shell_show_cpu_int(__unused int32_t argc, __unused char **argv);
@@ -85,6 +86,12 @@ static struct shell_cmd shell_cmds[] = {
 		.cmd_param	= SHELL_CMD_VCPU_DUMPREG_PARAM,
 		.help_str	= "vmread <field>",
 		.fcn		= shell_vcpu_vmread,
+	},
+	{
+		.str		= "vmwrite",
+		.cmd_param	= SHELL_CMD_VCPU_DUMPREG_PARAM,
+		.help_str	= "vmwrite <field> value",
+		.fcn		= shell_vcpu_vmwrite,
 	},
 	{
 		.str		= SHELL_CMD_DUMPMEM,
@@ -813,6 +820,8 @@ static int32_t shell_vcpu_dumpreg(int32_t argc, char **argv)
 	shell_puts(shell_log_buf);
 	status = 0;
 
+	printf("vmcs:%lx\n", vcpu->arch.vmcs);
+
 out:
 	return status;
 }
@@ -820,6 +829,8 @@ out:
 static int32_t shell_vcpu_vmread(int32_t argc, char **argv)
 {
 	uint32_t field = 0;
+	uint64_t rflags;
+	uint64_t error;
 	uint64_t val;
 
 	if (argc != 2) {
@@ -829,7 +840,32 @@ static int32_t shell_vcpu_vmread(int32_t argc, char **argv)
 	field = strtoul_hex(argv[1]);
 	val = exec_vmread64(field);
 
-	printf("vmread(0x%x):0x%llu\n", field, val);
+	CPU_RFLAGS_SAVE(&rflags);
+	error = exec_vmread64(VMX_ENTRY_EXCEPTION_ERROR_CODE);
+
+	printf("vmread(0x%x):0x%llx  rflags:%llx error:%llx\n", field, val, rflags, error);
+	return 0;
+}
+
+static int32_t shell_vcpu_vmwrite(int32_t argc, char **argv)
+{
+	uint32_t field = 0;
+	uint64_t rflags;
+	uint64_t error;
+	uint64_t val;
+
+	if (argc != 3) {
+		return -EINVAL;
+	}
+
+	field = strtoul_hex(argv[1]);
+	val = strtoul_hex(argv[2]);
+
+	exec_vmwrite64(field, val);
+	CPU_RFLAGS_SAVE(&rflags);
+	error = exec_vmread64(VMX_ENTRY_EXCEPTION_ERROR_CODE);
+
+	printf("vmwrite(0x%x):0x%llx  rflags:%llx error:%llx\n", field, val, rflags, error);
 	return 0;
 }
 
