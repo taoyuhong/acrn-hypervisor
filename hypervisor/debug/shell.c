@@ -47,6 +47,7 @@ static int32_t shell_cpuid(int32_t argc, char **argv);
 static int32_t shell_trigger_crash(int32_t argc, char **argv);
 static int32_t shell_rdmsr(int32_t argc, char **argv);
 static int32_t shell_wrmsr(int32_t argc, char **argv);
+static int32_t shell_e820(int32_t argc, char **argv);
 
 static struct shell_cmd shell_cmds[] = {
 	{
@@ -138,6 +139,12 @@ static struct shell_cmd shell_cmds[] = {
 		.cmd_param	= SHELL_CMD_WRMSR_PARAM,
 		.help_str	= SHELL_CMD_WRMSR_HELP,
 		.fcn		= shell_wrmsr,
+	},
+	{
+		.str		= "e820",
+		.cmd_param	= SHELL_CMD_WRMSR_PARAM,
+		.help_str	= SHELL_CMD_WRMSR_HELP,
+		.fcn		= shell_e820,
 	},
 };
 
@@ -1319,6 +1326,77 @@ static int32_t shell_rdmsr(int32_t argc, char **argv)
 	return ret;
 }
 
+static int32_t shell_e820(int32_t argc, char **argv)
+{
+	int32_t i = 0, i_max = 0;
+	char str[MAX_STR_SIZE] = {0};
+	const struct e820_entry *e = NULL;
+	char typ_str[2][64] = {"E820_TYPE_RAM","E820_TYPE_RESERVED"};
+	const struct e820_mem_params *e820_mem = NULL;
+
+	i_max = get_e820_entries_count();
+	if (argc == 1) {
+		e820_mem = get_e820_mem_info();
+		snprintf(str, MAX_STR_SIZE, "%s[%d]\ne820+mem = {\n"
+				"    .mem_bottom = 0x%lx,\n"
+				"    .mem_top = 0x%lx,\n"
+				"    .total_mem_size = 0x%lx,\n}\n" , argv[0], i_max,
+				e820_mem->mem_bottom, 
+				e820_mem->mem_top, 
+				e820_mem->total_mem_size 
+				);
+		shell_puts(str);
+		return 0;
+	}
+
+	i = strtol_deci(argv[1]);
+	e = get_e820_entry();
+
+	if (i < i_max) {
+		if (e[i].type > 2)
+			snprintf(str, MAX_STR_SIZE, "\n%s[%d] = {\n"
+				"    .baseaddr = 0x%lx,\n"
+				"    .length = 0x%lx,\n"
+				"    .type = 0x%lx,\n};\n"
+					, argv[0], i,
+					e[i].baseaddr,
+					e[i].length,
+					e[i].type);
+		else
+			snprintf(str, MAX_STR_SIZE, "\n%s[%d] = {\n"
+				"    .baseaddr = 0x%lx,\n"
+				"    .length = 0x%lx,\n"
+				"    .type = %s,\n};\n"
+					, argv[0], i,
+					e[i].baseaddr,
+					e[i].length,
+					typ_str[e[i].type - 1]);
+		shell_puts(str);
+		return 0;
+	} else {
+		for (i = 0; i < i_max; i++) {
+			if (e[i].type > 2) {
+			snprintf(str, MAX_STR_SIZE, "%d e820[%d].baseaddr  0x%lx\n"
+							"%d e820[%d].length  0x%lx\n"
+							"%d e820[%d].type  0x%lx\n",
+							i,i,e[i].baseaddr, 
+							i,i,e[i].length, 
+							i,i,e[i].type);
+			} else {	
+			snprintf(str, MAX_STR_SIZE, "%d e820[%d].baseaddr  0x%lx\n"
+							"%d e820[%d].length  0x%lx\n"
+							"%d e820[%d].type  %s\n",
+							i,i,e[i].baseaddr, 
+							i,i,e[i].length, 
+							i,i, typ_str[e[i].type - 1]);
+			}
+		        shell_puts(str);
+		}
+		return 0;
+	}
+
+}
+		
 static int32_t shell_wrmsr(int32_t argc, char **argv)
 {
 	uint16_t pcpu_id = 0;
