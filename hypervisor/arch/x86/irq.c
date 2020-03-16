@@ -370,17 +370,24 @@ void dispatch_exception(struct intr_excp_ctx *ctx)
 {
 	uint16_t pcpu_id = get_pcpu_id();
 
-	/* Obtain lock to ensure exception dump doesn't get corrupted */
-	spinlock_obtain(&exception_spinlock);
+	if (ctx->vector == IDT_AC) {
+		/* #AC in HV is always triggered by Splitlock Access */
+		pr_err("HV has detected Splitlock Access at CPU%d rip:0x%016llX\n"
+			"Temporally disable Splitlock Access", pcpu_id, ctx->rip);
+		disable_ac_for_splitlock();
+	} else {
+		/* Obtain lock to ensure exception dump doesn't get corrupted */
+		spinlock_obtain(&exception_spinlock);
 
-	/* Dump exception context */
-	dump_exception(ctx, pcpu_id);
+		/* Dump exception context */
+		dump_exception(ctx, pcpu_id);
 
-	/* Release lock to let other CPUs handle exception */
-	spinlock_release(&exception_spinlock);
+		/* Release lock to let other CPUs handle exception */
+		spinlock_release(&exception_spinlock);
 
-	/* Halt the CPU */
-	cpu_dead();
+		/* Halt the CPU */
+		cpu_dead();
+	}
 }
 
 void handle_nmi(__unused struct intr_excp_ctx *ctx)
