@@ -685,6 +685,16 @@ static inline void clac(void)
 uint16_t get_pcpu_nums(void);
 bool is_pcpu_active(uint16_t pcpu_id);
 uint64_t get_active_pcpu_bitmap(void);
+
+void init_ac_for_splitlock(void);
+bool has_ac_for_splitlock(void);
+
+/*
+ * @pre has_ac_for_splitlock() == true
+ */
+void enable_ac_for_splitlock(void);
+void disable_ac_for_splitlock(void);
+
 #else /* ASSEMBLER defined */
 
 #endif /* ASSEMBLER defined */

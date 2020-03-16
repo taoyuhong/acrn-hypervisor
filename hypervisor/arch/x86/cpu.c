@@ -572,3 +572,45 @@ uint64_t msr_read_pcpu(uint32_t msr_index, uint16_t pcpu_id)
 
 	return ret;
 }
+
+static bool ac_for_splitlock = false;
+
+inline bool has_ac_for_splitlock(void)
+{
+	return ac_for_splitlock;
+}
+
+void enable_ac_for_splitlock(void)
+{
+	uint64_t test_ctl;
+
+	test_ctl = msr_read(MSR_TEST_CTL);
+	test_ctl |= (1U<<29U);
+	msr_write(MSR_TEST_CTL, test_ctl);
+}
+
+void disable_ac_for_splitlock(void)
+{
+	uint64_t test_ctl;
+
+	test_ctl = msr_read(MSR_TEST_CTL);
+	test_ctl &= (~(1U<<29U));
+	msr_write(MSR_TEST_CTL, test_ctl);
+}
+
+void init_ac_for_splitlock(void)
+{
+	uint32_t eax, ebx, ecx, edx;
+	uint64_t core_cap;
+
+	/* has MSR_IA32_CORE_CAPABILITIES? */
+	cpuid(CPUID_EXTEND_FEATURE, &eax, &ebx, &ecx, &edx);
+	if ((edx & CPUID_EDX_CORE_CAP) != 0U) {
+		/* support #AC for splitlock access? */
+		core_cap = msr_read(MSR_IA32_CORE_CAPABILITIES);
+		if ((core_cap & (1U<<5U)) != 0U) {
+			ac_for_splitlock = true;
+			enable_ac_for_splitlock();
+		}
+	}
+}

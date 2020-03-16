@@ -79,6 +79,8 @@ void init_primary_pcpu(void)
 	/* Clear BSS */
 	(void)memset(&ld_bss_start, 0U, (size_t)(&ld_bss_end - &ld_bss_start));
 
+	init_ac_for_splitlock();
+
 	parse_hv_cmdline();
 
 	init_debug_pre();
@@ -94,6 +96,10 @@ void init_primary_pcpu(void)
 void init_secondary_pcpu(void)
 {
 	uint16_t pcpu_id;
+
+	if (has_ac_for_splitlock() == true) {
+		enable_ac_for_splitlock();
+	}
 
 	init_pcpu_pre(false);
 

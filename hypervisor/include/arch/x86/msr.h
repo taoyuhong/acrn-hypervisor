@@ -18,6 +18,7 @@
 #define MSR_IA32_TIME_STAMP_COUNTER		0x00000010U
 #define MSR_IA32_PLATFORM_ID			0x00000017U
 #define MSR_IA32_APIC_BASE			0x0000001BU
+#define MSR_TEST_CTL				0x00000033U
 #define MSR_IA32_FEATURE_CONTROL		0x0000003AU
 #define MSR_IA32_TSC_ADJUST			0x0000003BU
 /* Speculation Control */
@@ -40,6 +41,7 @@
 #define MSR_IA32_PMC5				0x000000C6U
 #define MSR_IA32_PMC6				0x000000C7U
 #define MSR_IA32_PMC7				0x000000C8U
+#define MSR_IA32_CORE_CAPABILITIES		0x000000CFU
 /* Max. qualified performance clock counter */
 #define MSR_IA32_MPERF				0x000000E7U
 /* Actual performance clock counter */
