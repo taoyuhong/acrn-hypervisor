@@ -106,4 +106,8 @@ struct shell {
 #define SHELL_CMD_WRMSR_PARAM		"[-p<pcpu_id>]	<msr_index> <value>"
 #define SHELL_CMD_WRMSR_HELP		"Write value (in hexadecimal) to the MSR at msr_index (in hexadecimal) for CPU"\
 					" ID pcpu_id"
+
+#define SHELL_CMD_SPLITLOCK		"splitlock"
+#define SHELL_CMD_SPLITLOCK_PARAM	"[<pcpu_id>]"
+#define SHELL_CMD_SPLITLOCK_HELP	"trigger Splitlock Access on CPUn, n is <pcpu_id>"
 #endif /* SHELL_PRIV_H */

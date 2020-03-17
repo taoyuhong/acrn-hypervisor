@@ -51,6 +51,7 @@ static int32_t shell_cpuid(int32_t argc, char **argv);
 static int32_t shell_trigger_crash(int32_t argc, char **argv);
 static int32_t shell_rdmsr(int32_t argc, char **argv);
 static int32_t shell_wrmsr(int32_t argc, char **argv);
+static int32_t shell_splitlock(int32_t argc, char **argv);
 
 static struct shell_cmd shell_cmds[] = {
 	{
@@ -154,6 +155,12 @@ static struct shell_cmd shell_cmds[] = {
 		.cmd_param	= SHELL_CMD_WRMSR_PARAM,
 		.help_str	= SHELL_CMD_WRMSR_HELP,
 		.fcn		= shell_wrmsr,
+	},
+	{
+		.str		= SHELL_CMD_SPLITLOCK,
+		.cmd_param	= SHELL_CMD_SPLITLOCK_PARAM,
+		.help_str	= SHELL_CMD_SPLITLOCK_HELP,
+		.fcn		= shell_splitlock,
 	},
 };
 
@@ -1454,4 +1461,30 @@ static int32_t shell_wrmsr(int32_t argc, char **argv)
 	}
 
 	return ret;
+}
+
+static struct splitlock_cacheline {
+	char data[64];
+} __aligned(64) two_line[2];
+
+static void smpcall_atomic_inc(void *v)
+{
+	printf("atomic_inc64(0x%llx) ac_for_splitlock():%d\n", (uint64_t)v, has_ac_for_splitlock());
+	atomic_inc64(v);
+}
+
+static int32_t shell_splitlock(__unused int32_t argc, __unused char **argv)
+{
+	uint64_t *split_val = (void*)&(two_line[0].data[63]);
+	uint64_t mask = 0UL;
+	uint16_t pcpu_id = 0;
+
+	if (argc == 2) {
+		pcpu_id = (uint16_t)strtol_deci(argv[1]);
+	}
+	bitmap_set_nolock(pcpu_id, &mask);
+
+        smp_call_function(mask, smpcall_atomic_inc, (void*)split_val);
+
+	return 0;
 }
