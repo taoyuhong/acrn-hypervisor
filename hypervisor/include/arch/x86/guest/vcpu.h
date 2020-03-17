@@ -181,6 +181,7 @@ struct msr_store_entry {
 enum {
 	MSR_AREA_TSC_AUX = 0,
 	MSR_AREA_IA32_PQR_ASSOC,
+	MSR_AREA_TEST_CTL,
 	MSR_AREA_COUNT,
 };
 
