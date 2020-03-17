@@ -571,6 +571,10 @@ int32_t run_vcpu(struct acrn_vcpu *vcpu)
 		/* Launch the VM */
 		status = vmx_vmrun(ctx, VM_LAUNCH, ibrs_type);
 
+		if (has_ac_for_splitlock() == true) {
+			enable_ac_for_splitlock();
+		}
+
 		/* See if VM launched successfully */
 		if (status == 0) {
 			if (is_vcpu_bsp(vcpu)) {
@@ -595,6 +599,10 @@ int32_t run_vcpu(struct acrn_vcpu *vcpu)
 
 		/* Resume the VM */
 		status = vmx_vmrun(ctx, VM_RESUME, ibrs_type);
+
+		if (has_ac_for_splitlock() == true) {
+			enable_ac_for_splitlock();
+		}
 	}
 
 	vcpu->reg_cached = 0UL;
