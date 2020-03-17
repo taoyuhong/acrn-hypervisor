@@ -335,6 +335,7 @@ void init_msr_emulation(struct acrn_vcpu *vcpu)
 	uint8_t *msr_bitmap = vcpu->arch.msr_bitmap;
 	uint32_t msr, i;
 	uint64_t value64;
+	struct acrn_vm_config *cfg = get_vm_config(vcpu->vm->vm_id);
 
 	for (i = 0U; i < NUM_GUEST_MSRS; i++) {
 		enable_msr_interception(msr_bitmap, emulated_guest_msrs[i], INTERCEPT_READ_WRITE);
@@ -357,6 +358,11 @@ void init_msr_emulation(struct acrn_vcpu *vcpu)
 
 	/* don't need to intercept rdmsr for these MSRs */
 	enable_msr_interception(msr_bitmap, MSR_IA32_TIME_STAMP_COUNTER, INTERCEPT_WRITE);
+
+	/* intercept wrmsr to MSR_TEST_CTL for low severity VM */
+	if (cfg->severity <= SEVERITY_SOS) {
+		enable_msr_interception(msr_bitmap, MSR_TEST_CTL, INTERCEPT_WRITE);
+	}
 
 	/* Setup MSR bitmap - Intel SDM Vol3 24.6.9 */
 	value64 = hva2hpa(vcpu->arch.msr_bitmap);
@@ -740,6 +746,18 @@ int32_t wrmsr_vmexit_handler(struct acrn_vcpu *vcpu)
 	case MSR_IA32_TIME_STAMP_COUNTER:
 	{
 		set_guest_tsc(vcpu, v);
+		break;
+	}
+	case MSR_TEST_CTL:
+	{
+		/* If low severity VM has MSR_TEST_CTL, ignore write operation
+		 * If don't have MSR_TEST_CTL, trigger #GP
+		 */
+		if (has_ac_for_splitlock() != true) {
+			vcpu_inject_gp(vcpu, 0U);
+		} else {
+			pr_err("Ignore writting 0x%llx to MSR_TEST_CTL from VM%d", v, vcpu->vm->vm_id);
+		}
 		break;
 	}
 	case MSR_IA32_MTRR_DEF_TYPE:
