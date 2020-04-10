@@ -502,6 +502,7 @@ static int32_t shell_cmd_help(__unused int32_t argc, __unused char **argv)
 	struct shell_cmd *p_cmd = NULL;
 	char space_buf[MAX_INDENT_LEN + 1];
 
+	shell_puts("\r\nDATE: " __DATE__ "    TIME: " __TIME__ ); 
 	/* Print title */
 	shell_puts("\r\nRegistered Commands:\r\n\r\n");
 
