@@ -7,10 +7,30 @@
 #include <vm_config.h>
 #include <vuart.h>
 #include <pci_dev.h>
+#include <pci_devices.h>
+#include <dm/vpci.h>
+
+struct acrn_vm_pci_dev_config vm0_pci_devs[3] = {
+	{
+		.emu_type = PCI_DEV_TYPE_HVEMUL,
+		.vbdf.bits = {.b = 0x00U, .d = 0x00U, .f = 0x00U},
+		.vdev_ops = &vhostbridge_ops,
+	},
+	{
+		.emu_type = PCI_DEV_TYPE_PTDEV,
+		.vbdf.bits = {.b = 0x00U, .d = 0x01U, .f = 0x00U},
+		NON_VOLATILE_MEMORY_CONTROLLER_0
+	},
+	{
+		.emu_type = PCI_DEV_TYPE_PTDEV,
+		.vbdf.bits = {.b = 0x00U, .d = 0x02U, .f = 0x00U},
+		ETHERNET_CONTROLLER_1
+	},
+};
 
 struct acrn_vm_config vm_configs[CONFIG_MAX_VM_NUM] = {
 	{	/* VM0 */
-		CONFIG_SAFETY_VM(1),
+		CONFIG_PRE_STD_VM(1),
 		.name = "ACRN PRE-LAUNCHED VM0",
 		.guest_flags = 0UL,
 		.cpu_affinity = VM0_CONFIG_CPU_AFFINITY,
@@ -19,12 +39,10 @@ struct acrn_vm_config vm_configs[CONFIG_MAX_VM_NUM] = {
 			.size = VM0_CONFIG_MEM_SIZE,
 		},
 		.os_config = {
-			.name = "Zephyr",
-			.kernel_type = KERNEL_ZEPHYR,
-			.kernel_mod_tag = "Zephyr_RawImage",
-			.bootargs = "",
-			.kernel_load_addr = 0x100000,
-			.kernel_entry_addr = 0x100000,
+			.name = "ClearLinux",
+			.kernel_type = KERNEL_BZIMAGE,
+			.kernel_mod_tag = "RT_bzImage",
+			.bootargs = "console=tty0 console=ttyS0,115200n8 root=/dev/nvme0n1p3 rw rootwait ignore_loglevel no_timer_check consoleblank=0 hvlog=2M@0x1FE00000 memmap=2M$0x1FE00000  maxcpus=4 nohpet tsc=reliable processor.max_cstate=0 intel_idle.max_cstate=0  mce=ignore_ce audit=0 isolcpus=nohz,domain,1 nohz_full=1 rcu_nocbs=1 nosoftlockup idle=poll irqaffinity=0 nopcid",
 		},
 		.vuart[0] = {
 			.type = VUART_LEGACY_PIO,
@@ -37,7 +55,9 @@ struct acrn_vm_config vm_configs[CONFIG_MAX_VM_NUM] = {
 			.irq = COM2_IRQ,
 			.t_vuart.vm_id = 1U,
 			.t_vuart.vuart_id = 1U,
-		}
+		},
+		.pci_dev_num = 3,
+		.pci_devs = vm0_pci_devs,
 	},
 	{	/* VM1 */
 		CONFIG_SOS_VM,
@@ -50,7 +70,7 @@ struct acrn_vm_config vm_configs[CONFIG_MAX_VM_NUM] = {
 		.os_config = {
 			.name = "ACRN Service OS",
 			.kernel_type = KERNEL_BZIMAGE,
-			.kernel_mod_tag = "Linux_bzImage",
+			.kernel_mod_tag = "SOS_bzImage",
 			.bootargs = SOS_VM_BOOTARGS,
 		},
 		.vuart[0] = {
