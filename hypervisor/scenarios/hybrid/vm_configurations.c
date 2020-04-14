@@ -32,8 +32,9 @@ struct acrn_vm_config vm_configs[CONFIG_MAX_VM_NUM] = {
 	{	/* VM0 */
 		CONFIG_PRE_STD_VM(1),
 		.name = "ACRN PRE-LAUNCHED VM0",
-		.guest_flags = 0UL,
 		.cpu_affinity = VM0_CONFIG_CPU_AFFINITY,
+		//.guest_flags = (GUEST_FLAG_RT | GUEST_FLAG_LAPIC_PASSTHROUGH),
+		.guest_flags = 0U,
 		.memory = {
 			.start_hpa = VM0_CONFIG_MEM_START_HPA,
 			.size = VM0_CONFIG_MEM_SIZE,
@@ -42,7 +43,7 @@ struct acrn_vm_config vm_configs[CONFIG_MAX_VM_NUM] = {
 			.name = "ClearLinux",
 			.kernel_type = KERNEL_BZIMAGE,
 			.kernel_mod_tag = "RT_bzImage",
-			.bootargs = "console=tty0 console=ttyS0,115200n8 root=/dev/nvme0n1p3 rw rootwait ignore_loglevel no_timer_check consoleblank=0 hvlog=2M@0x1FE00000 memmap=2M$0x1FE00000  maxcpus=4 nohpet tsc=reliable processor.max_cstate=0 intel_idle.max_cstate=0  mce=ignore_ce audit=0 isolcpus=nohz,domain,1 nohz_full=1 rcu_nocbs=1 nosoftlockup idle=poll irqaffinity=0 nopcid",
+			.bootargs = "console=tty0 console=ttyS0,115200n8 earlyprintk=ttyS0 root=/dev/nvme0n1p3 rw rootwait ignore_loglevel no_timer_check consoleblank=0 x2apic_phys hvlog=2M@0x1FE00000 memmap=2M$0x1FE00000  maxcpus=4 nohpet tsc=reliable processor.max_cstate=0 intel_idle.max_cstate=0  mce=ignore_ce audit=0 isolcpus=nohz,domain,1 nohz_full=1 rcu_nocbs=1 nosoftlockup idle=poll irqaffinity=0 nopcid ",
 		},
 		.vuart[0] = {
 			.type = VUART_LEGACY_PIO,
