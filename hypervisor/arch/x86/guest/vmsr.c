@@ -174,7 +174,7 @@ static const uint32_t unsupported_msrs[NUM_UNSUPPORTED_MSRS] = {
 	/* RDT-M disabled: CPUID.07H.EBX[12], CPUID.07H.EBX[15] */
 	MSR_IA32_QM_EVTSEL,
 	MSR_IA32_QM_CTR,
-	MSR_IA32_PQR_ASSOC,
+	//MSR_IA32_PQR_ASSOC,
 
 	/* RDT-A disabled: CPUID.07H.EBX[12], CPUID.10H */
 	/* MSR 0xC90 ... 0xD8F, not in this array */
