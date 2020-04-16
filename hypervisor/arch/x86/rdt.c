@@ -65,30 +65,13 @@ static struct rdt_info res_cap_info[RDT_NUM_RESOURCES] = {
  */
 static void init_cat_capability(int res)
 {
-	uint32_t eax = 0U, ebx = 0U, ecx = 0U, edx = 0U;
+	uint64_t val;
+	/* switch on Cache QOS */
+	val = msr_read(0x95U);
+	msr_write(0x95U, val | 0x1U);
 
-	/* CPUID.(EAX=0x10,ECX=ResID):EAX[4:0] reports the length of CBM supported
-	 * CPUID.(EAX=0x10,ECX=ResID):EBX[31:0] indicates shared cache mask bits
-	 * that are used by other entities such as graphic and H/W outside processor.
-	 * CPUID.(EAX=0x10,ECX=ResID):EDX[15:0] reports the maximun CLOS supported
-	 */
-	cpuid_subleaf(CPUID_RDT_ALLOCATION, res_cap_info[res].res_id, &eax, &ebx, &ecx, &edx);
-	res_cap_info[res].res.cache.cbm_len = (uint16_t)((eax & 0x1fU) + 1U);
-	res_cap_info[res].res.cache.bitmask = ebx;
-#ifdef CONFIG_CDP_ENABLED
-	res_cap_info[res].res.cache.is_cdp_enabled = ((ecx & 0x4U) != 0U);
-#else
-	res_cap_info[res].res.cache.is_cdp_enabled = false; 
-#endif
-	if (res_cap_info[res].res.cache.is_cdp_enabled) {
-		res_cap_info[res].clos_max = (uint16_t)((edx & 0xffffU) >> 1U) + 1U;
-		/* enable CDP before setting COS to simplify CAT mask rempping
-		 * and prevent unintended behavior.
-		 */
-		msr_write(res_cap_info[res].res.cache.msr_qos_cfg, 0x1UL);
-	} else {
-		res_cap_info[res].clos_max = (uint16_t)(edx & 0xffffU) + 1U;
-	}
+	res_cap_info[res].res.cache.cbm_len = 16U;
+	res_cap_info[res].clos_max = 4U;;
 }
 
 static void init_mba_capability(int res)
@@ -114,11 +97,11 @@ void init_rdt_info(void)
 	uint8_t i;
 	uint32_t eax = 0U, ebx = 0U, ecx = 0U, edx = 0U;
 
-	if (pcpu_has_cap(X86_FEATURE_RDT_A)) {
+	if (1) {
 		cpuid_subleaf(CPUID_RDT_ALLOCATION, 0U, &eax, &ebx, &ecx, &edx);
 
 		/* If HW supports L3 CAT, EBX[1] is set */
-		if ((ebx & 2U) != 0U) {
+		if (1) {
 			init_cat_capability(RDT_RESOURCE_L3);
 		}
 
@@ -198,7 +181,7 @@ uint64_t clos2pqr_msr(uint16_t clos)
 	uint64_t pqr_assoc;
 
 	pqr_assoc = msr_read(MSR_IA32_PQR_ASSOC);
-	pqr_assoc = (pqr_assoc & 0xffffffffUL) | ((uint64_t)clos << 32U);
+	pqr_assoc = (pqr_assoc & 0UL) + clos;
 
 	return pqr_assoc;
 }
