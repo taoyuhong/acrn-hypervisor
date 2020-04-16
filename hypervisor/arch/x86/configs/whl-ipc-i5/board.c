@@ -96,3 +96,31 @@ const struct cpu_state_table board_cpu_state_tbl = {
 	(uint8_t)ARRAY_SIZE(board_cpu_cx), board_cpu_cx}
 };
 const union pci_bdf plat_hidden_pdevs[MAX_HIDDEN_PDEVS_NUM];
+
+#ifdef CONFIG_RDT_ENABLED
+struct platform_clos_info platform_l2_clos_array[MAX_PLATFORM_CLOS_NUM];
+struct platform_clos_info platform_l3_clos_array[MAX_PLATFORM_CLOS_NUM] = {
+        {
+                //.clos_mask = 0xffff,
+                .clos_mask = 0xff00,
+                .msr_index = MSR_IA32_L3_MASK_BASE,
+        },
+        {
+                //.clos_mask = 0xf,
+                .clos_mask = 0xff00,
+                .msr_index = MSR_IA32_L3_MASK_BASE + 1U,
+        },
+        {
+                //.clos_mask = 0x3ff,
+                .clos_mask = 0xff,
+                .msr_index = MSR_IA32_L3_MASK_BASE + 2U,
+        },
+        {
+                //.clos_mask = 0xfff,
+                .clos_mask = 0xff,
+                .msr_index = MSR_IA32_L3_MASK_BASE + 3U,
+        },
+};
+struct platform_clos_info platform_mba_clos_array[MAX_PLATFORM_CLOS_NUM];
+#endif
+

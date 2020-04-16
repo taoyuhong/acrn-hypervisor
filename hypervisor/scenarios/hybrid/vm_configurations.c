@@ -28,6 +28,9 @@ struct acrn_vm_pci_dev_config vm0_pci_devs[3] = {
 	},
 };
 
+#define VM0_VCPU_CLOS          {2U, 3U}
+#define VM1_VCPU_CLOS          {0U, 1U}
+
 struct acrn_vm_config vm_configs[CONFIG_MAX_VM_NUM] = {
 	{	/* VM0 */
 		CONFIG_PRE_STD_VM(1),
@@ -44,6 +47,7 @@ struct acrn_vm_config vm_configs[CONFIG_MAX_VM_NUM] = {
 			.kernel_mod_tag = "RT_bzImage",
 			.bootargs = "console=tty0 console=ttyS0,115200n8 earlyprintk=ttyS0 root=/dev/nvme0n1p3 rw rootwait ignore_loglevel no_timer_check consoleblank=0 x2apic_phys hvlog=2M@0x1FE00000 memmap=2M$0x1FE00000  maxcpus=4 nohpet tsc=reliable processor.max_cstate=0 intel_idle.max_cstate=0  mce=ignore_ce audit=0 isolcpus=nohz,domain,1 nohz_full=1 rcu_nocbs=1 nosoftlockup idle=poll irqaffinity=0 nopcid ",
 		},
+		.clos = VM0_VCPU_CLOS,
 		.vuart[0] = {
 			.type = VUART_LEGACY_PIO,
 			.addr.port_base = COM1_BASE,
@@ -73,6 +77,7 @@ struct acrn_vm_config vm_configs[CONFIG_MAX_VM_NUM] = {
 			.kernel_mod_tag = "SOS_bzImage",
 			.bootargs = SOS_VM_BOOTARGS,
 		},
+		.clos = VM1_VCPU_CLOS,
 		.vuart[0] = {
 			.type = VUART_LEGACY_PIO,
 			.addr.port_base = SOS_COM1_BASE,
