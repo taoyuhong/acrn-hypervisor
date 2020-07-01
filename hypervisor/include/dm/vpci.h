@@ -33,6 +33,7 @@
 #include <spinlock.h>
 #include <pci.h>
 
+#define MAX_ECAPS_OVERRIDE 2U
 
 struct pci_vbar {
 	enum pci_bar_type type;
@@ -95,6 +96,18 @@ struct pci_vdev_ops {
        int32_t (*read_vdev_cfg)(const struct pci_vdev *vdev, uint32_t offset, uint32_t bytes, uint32_t *val);
 };
 
+struct ecap_override {
+	uint32_t off;
+	uint32_t read;
+	uint32_t write;
+	uint32_t len;
+};
+
+struct ecap_read_only {
+	uint32_t off;
+	uint32_t len;
+};
+
 struct pci_vdev {
 	struct acrn_vpci *vpci;
 	/* The bus/device/function triple of the virtual PCI device. */
@@ -133,6 +146,10 @@ struct pci_vdev {
 	 */
 	struct pci_vdev *parent_user;
 	struct pci_vdev *user;	/* NULL means this device is not used or is a zombie VF */
+
+	struct ecap_override ecaps[MAX_ECAPS_OVERRIDE];
+	struct ecap_read_only rd_only[MAX_ECAPS_OVERRIDE];
+	uint32_t ecaps_cnt;
 };
 
 union pci_cfg_addr_reg {

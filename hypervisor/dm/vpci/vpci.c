@@ -490,11 +490,80 @@ static void write_cfg_header(struct pci_vdev *vdev,
 	}
 }
 
+static struct ecap_override *get_ecap_override(struct pci_vdev *vdev, uint32_t offset, uint32_t bytes)
+{
+	struct ecap_override *ecap = NULL;
+	uint32_t i = 0;
+
+	if (offset >= PCI_ECAP_BASE_PTR) {
+		for (i = 0; i < MAX_ECAPS_OVERRIDE; i++) {
+			if (i >= vdev->ecaps_cnt) {
+				break;
+			}
+			if (in_range(offset, vdev->ecaps[i].off,  vdev->ecaps[i].len) ||
+				in_range(vdev->ecaps[i].off, offset, bytes)) {
+				ecap = &vdev->ecaps[i];
+				break;
+			}
+		}
+	}
+
+	return ecap;
+}
+
+static bool ecap_read_only(struct pci_vdev *vdev, uint32_t offset, uint32_t bytes)
+{
+	struct ecap_read_only *read_only = NULL;
+	uint32_t i = 0;
+
+	if (offset >= PCI_ECAP_BASE_PTR) {
+		for (i = 0; i < MAX_ECAPS_OVERRIDE; i++) {
+			if (i >= vdev->ecaps_cnt) {
+				break;
+			}
+			if (in_range(offset, vdev->rd_only[i].off,  vdev->rd_only[i].len) ||
+				in_range(vdev->rd_only[i].off, offset, bytes)) {
+				read_only = &vdev->rd_only[i];
+				break;
+			}
+		}
+	}
+
+	return read_only != NULL;
+}
+
+static uint32_t ecap_overlap_value(uint32_t val, uint32_t offset, uint32_t bytes, struct ecap_override *ecap, bool is_write)
+{
+	uint32_t ret = val, final_val;
+	uint32_t d = 0U;
+
+	if (is_write) {
+		final_val =  ecap->write;
+	} else {
+		final_val =  ecap->read;
+	}
+
+	if (in_range(offset, ecap->off, ecap->len)) {
+		d = offset - ecap->off;
+		ret = ret >> (d * 8U);
+		ret = ret << (d * 8U);
+		ret |= final_val >> (d * 8U);
+	} else if (in_range(ecap->off, offset, bytes)) {
+		d = ecap->off - offset;
+		ret = ret << ((sizeof(val) - d) * 8U);
+		ret = ret >> (d * 8U);
+		ret |=  final_val << (d * 8U);
+	}
+
+	return ret;
+}
+
 static int32_t write_pt_dev_cfg(struct pci_vdev *vdev, uint32_t offset,
 		uint32_t bytes, uint32_t val)
 {
 	int32_t ret = 0;
-
+	uint32_t final_val = val;
+	struct ecap_override *ecap;
 	if (cfg_header_access(offset)) {
 		write_cfg_header(vdev, offset, bytes, val);
 	} else if (msicap_access(vdev, offset)) {
@@ -505,8 +574,15 @@ static int32_t write_pt_dev_cfg(struct pci_vdev *vdev, uint32_t offset,
 		write_sriov_cap_reg(vdev, offset, bytes, val);
 	} else {
 		if (!is_quirk_ptdev(vdev)) {
-			/* passthru to physical device */
-			pci_pdev_write_cfg(vdev->pdev->bdf, offset, bytes, val);
+			if(!ecap_read_only(vdev, offset, bytes)) {
+				ecap = get_ecap_override(vdev, offset, bytes);
+				if (NULL != ecap) {
+					final_val = ecap_overlap_value(val, offset, bytes, ecap, true);
+				}
+
+				/* passthru to physical device */
+				pci_pdev_write_cfg(vdev->pdev->bdf, offset, bytes, final_val);
+			}
 		} else {
 			ret = -ENODEV;
 		}
@@ -519,6 +595,8 @@ static int32_t read_pt_dev_cfg(const struct pci_vdev *vdev, uint32_t offset,
 		uint32_t bytes, uint32_t *val)
 {
 	int32_t ret = 0;
+	struct ecap_override *ecap;
+	uint32_t final_val;
 
 	if (cfg_header_access(offset)) {
 		read_cfg_header(vdev, offset, bytes, val);
@@ -531,7 +609,12 @@ static int32_t read_pt_dev_cfg(const struct pci_vdev *vdev, uint32_t offset,
 	} else {
 		if (!is_quirk_ptdev(vdev)) {
 			/* passthru to physical device */
-			*val = pci_pdev_read_cfg(vdev->pdev->bdf, offset, bytes);
+			final_val = pci_pdev_read_cfg(vdev->pdev->bdf, offset, bytes);
+			ecap = get_ecap_override((struct pci_vdev *)vdev, offset, bytes);
+			if (NULL != ecap) {
+				final_val = ecap_overlap_value(final_val, offset, bytes, ecap, false);
+			}
+			*val = final_val;
 		} else {
 			ret = -ENODEV;
 		}
