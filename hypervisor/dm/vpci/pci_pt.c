@@ -345,6 +345,57 @@ static void init_bars(struct pci_vdev *vdev, bool is_sriov_bar)
 	}
 }
 
+static void vdev_pt_add_ecap_override(struct pci_vdev *vdev, struct ecap_override *ecap, struct ecap_read_only *rd)
+{
+	if (vdev->ecaps_cnt < MAX_ECAPS_OVERRIDE) {
+		vdev->ecaps[vdev->ecaps_cnt].off = ecap->off;
+		vdev->ecaps[vdev->ecaps_cnt].read = ecap->read;
+		vdev->ecaps[vdev->ecaps_cnt].write = ecap->write;
+		vdev->ecaps[vdev->ecaps_cnt].len = ecap->len;
+
+		vdev->rd_only[vdev->ecaps_cnt].off = rd->off;
+		vdev->rd_only[vdev->ecaps_cnt].len = rd->len;
+
+		vdev->ecaps_cnt++;
+	} else {
+		pr_err("can't override externd capability at offset 0x%x for ptdev %02x:%02x.%02x", ecap->off, vdev->pdev->bdf.bits.b, vdev->pdev->bdf.bits.d, vdev->pdev->bdf.bits.f);
+	}
+}
+
+void vdev_pt_hide_ecap(struct pci_vdev *vdev, uint32_t id, uint32_t len)
+{
+	uint32_t hdr, pre_hdr, pos, pre_pos;
+	struct ecap_override ecap;
+	struct ecap_read_only rd;
+
+	pos = PCI_ECAP_BASE_PTR;
+	pre_pos = 0U;
+	pre_hdr = 0U;
+
+	/* PCI Express Extended Capability must have 4 bytes header */
+	hdr = pci_pdev_read_cfg(vdev->pdev->bdf, pos, 4U);
+	while (hdr != 0U) {
+		if (PCI_ECAP_ID(hdr) == id) {
+			ecap.off = pre_pos;
+			ecap.len = 4U;
+			ecap.write = pre_hdr;
+			ecap.read = pre_hdr & 0xfffffU;
+			ecap.read |= hdr & 0xfff00000U;
+			rd.off = pos;
+			rd.len = len;
+			vdev_pt_add_ecap_override(vdev, &ecap, &rd);
+			break;
+		}
+		pre_pos = pos;
+		pos = PCI_ECAP_NEXT(hdr);
+		if ((pos == 0U) || (pos == pre_pos)) {
+			break;
+		}
+		pre_hdr = hdr;
+		hdr = pci_pdev_read_cfg(vdev->pdev->bdf, pos, 4U);
+	};
+}
+
 /*
  * @brief Initialize a specified passthrough vdev structure.
  *
