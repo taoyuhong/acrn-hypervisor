@@ -771,8 +771,9 @@ int32_t vpci_assign_pcidev(struct acrn_vm *tgt_vm, struct acrn_assign_pcidev *pc
 	 * For now, we don't support assignment of PF to a UOS.
 	 */
 	if ((vdev_in_sos != NULL) && (vdev_in_sos->user == vdev_in_sos) &&
-			(vdev_in_sos->pdev != NULL) && (!has_sriov_cap(vdev_in_sos)) &&
+			(vdev_in_sos->pdev != NULL) &&
 			!is_host_bridge(vdev_in_sos->pdev) && !is_bridge(vdev_in_sos->pdev)) {
+
 		/* ToDo: Each PT device must support one type reset */
 		if (!vdev_in_sos->pdev->has_pm_reset && !vdev_in_sos->pdev->has_flr &&
 				!vdev_in_sos->pdev->has_af_flr) {
@@ -789,6 +790,9 @@ int32_t vpci_assign_pcidev(struct acrn_vm *tgt_vm, struct acrn_assign_pcidev *pc
 
 		spinlock_obtain(&tgt_vm->vpci.lock);
 		vdev = vpci_init_vdev(vpci, vdev_in_sos->pci_dev_config, vdev_in_sos->phyfun);
+		if(has_sriov_cap(vdev_in_sos)) {
+			vdev_pt_hide_ecap(vdev, PCIZ_SRIOV);
+		}
 		pci_vdev_write_vcfg(vdev, PCIR_INTERRUPT_LINE, 1U, pcidev->intr_line);
 		pci_vdev_write_vcfg(vdev, PCIR_INTERRUPT_PIN, 1U, pcidev->intr_pin);
 		for (idx = 0U; idx < vdev->nr_bars; idx++) {
