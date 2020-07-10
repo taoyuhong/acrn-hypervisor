@@ -453,6 +453,10 @@ void init_vdev_pt(struct pci_vdev *vdev, bool is_pf_vdev)
 			}
 		}
 	}
+
+	if (is_prelaunched_vm(vpci2vm(vdev->vpci)) && (has_sriov_cap(vdev))) {
+		vdev_pt_hide_ecap(vdev, PCIZ_SRIOV, vdev->sriov.caplen);
+	}
 }
 
 /*
