@@ -42,6 +42,7 @@ static int32_t shell_list_vcpu(__unused int32_t argc, __unused char **argv);
 static int32_t shell_vcpu_dumpreg(int32_t argc, char **argv);
 static int32_t shell_dump_host_mem(int32_t argc, char **argv);
 static int32_t shell_dump_guest_mem(int32_t argc, char **argv);
+static int32_t shell_dump_guest_gpa(int32_t argc, char **argv);
 static int32_t shell_to_vm_console(int32_t argc, char **argv);
 static int32_t shell_show_cpu_int(__unused int32_t argc, __unused char **argv);
 static int32_t shell_show_ptdev_info(__unused int32_t argc, __unused char **argv);
@@ -95,6 +96,12 @@ static struct shell_cmd shell_cmds[] = {
 		.cmd_param	= SHELL_CMD_DUMP_GUEST_MEM_PARAM,
 		.help_str	= SHELL_CMD_DUMP_GUEST_MEM_HELP,
 		.fcn		= shell_dump_guest_mem,
+	},
+	{
+		.str		= "dump_guest_gpa",
+		.cmd_param	= SHELL_CMD_DUMP_GUEST_MEM_PARAM,
+		.help_str	= SHELL_CMD_DUMP_GUEST_MEM_HELP,
+		.fcn		= shell_dump_guest_gpa,
 	},
 	{
 		.str		= SHELL_CMD_VM_CONSOLE,
@@ -912,6 +919,41 @@ static void dump_guest_mem(void *data)
 	}
 }
 
+static void dump_guest_gpa(void *data)
+{
+	uint64_t i;
+	//uint32_t err_code = 0;
+	uint64_t loop_cnt;
+	uint64_t buf[4];
+	char temp_str[MAX_STR_SIZE];
+	struct guest_mem_dump *dump = (struct guest_mem_dump *)data;
+	uint64_t length = dump->len;
+	uint64_t gva = dump->gva;
+	struct acrn_vcpu *vcpu = dump->vcpu;
+	uint16_t pcpu_id = get_pcpu_id();
+	struct acrn_vcpu *curr = get_running_vcpu(pcpu_id);
+
+	load_vmcs(vcpu);
+
+	/* Change the length to a multiple of 32 if the length is not */
+	loop_cnt = ((length & 0x1fUL) == 0UL) ? ((length >> 5UL)) : ((length >> 5UL) + 1UL);
+
+	for (i = 0UL; i < loop_cnt; i++) {
+
+		if (copy_from_gpa(vcpu->vm, buf, gva, 32U) != 0) {
+			printf("copy_from_gpa error!\n");
+			break;
+		}
+		snprintf(temp_str, MAX_STR_SIZE, "GPA(0x%llx):  0x%016lx  0x%016lx  0x%016lx  0x%016lx\r\n",
+				gva, buf[0], buf[1], buf[2], buf[3]);
+		shell_puts(temp_str);
+		gva += 32UL;
+	}
+	if (curr != NULL) {
+		load_vmcs(curr);
+	}
+}
+
 static int32_t shell_dump_guest_mem(int32_t argc, char **argv)
 {
 	uint16_t vm_id, pcpu_id;
@@ -941,6 +983,41 @@ static int32_t shell_dump_guest_mem(int32_t argc, char **argv)
 		pcpu_id = pcpuid_from_vcpu(vcpu);
 		bitmap_set_nolock(pcpu_id, &mask);
 		smp_call_function(mask, dump_guest_mem, &dump);
+		ret = 0;
+	}
+
+	return ret;
+}
+
+static int32_t shell_dump_guest_gpa(int32_t argc, char **argv)
+{
+	uint16_t vm_id, pcpu_id;
+	int32_t ret;
+	uint64_t gva;
+	uint64_t length;
+	uint64_t mask = 0UL;
+	struct acrn_vm *vm;
+	struct acrn_vcpu *vcpu = NULL;
+	struct guest_mem_dump dump;
+
+	/* User input invalidation */
+	if (argc != 4) {
+		ret = -EINVAL;
+	} else {
+		vm_id = sanitize_vmid((uint16_t)strtol_deci(argv[1]));
+		gva = strtoul_hex(argv[2]);
+		length = (uint64_t)strtol_deci(argv[3]);
+
+		vm = get_vm_from_vmid(vm_id);
+		vcpu = vcpu_from_vid(vm, BSP_CPU_ID);
+
+		dump.vcpu = vcpu;
+		dump.gva = gva;
+		dump.len = length;
+
+		pcpu_id = pcpuid_from_vcpu(vcpu);
+		bitmap_set_nolock(pcpu_id, &mask);
+		smp_call_function(mask, dump_guest_gpa, &dump);
 		ret = 0;
 	}
 
