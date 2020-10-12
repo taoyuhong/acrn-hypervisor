@@ -78,6 +78,7 @@ struct acrn_vuart {
 	bool active;
 	struct acrn_vuart *target_vu; /* Pointer to target vuart */
 	struct acrn_vm *vm;
+	struct pci_vdev *vdev;	/* pci vuart */
 	spinlock_t lock;	/* protects all softc elements */
 };
 
