@@ -33,6 +33,7 @@
 #include <uart16550.h>
 #include <console.h>
 #include <vuart.h>
+#include <vuart-mcs99xx.h>
 #include <vm.h>
 #include <logmsg.h>
 
@@ -165,6 +166,52 @@ static struct acrn_vuart *find_vuart_by_port(struct acrn_vm *vm, uint16_t offset
 	return ret_vu;
 }
 
+static void vuart_assert_intr(const struct acrn_vuart *vu)
+{
+	union ioapic_rte rte;
+	uint32_t operation;
+
+	if (vu->vdev != NULL) {
+		trigger_vuart_msi(vu->vdev);
+	} else {
+		vioapic_get_rte(vu->vm, vu->irq, &rte);
+
+		/* TODO:
+		 * Here should assert vuart irq according to vCOM1_IRQ polarity.
+		 * The best way is to get the polarity info from ACPI table.
+		 * Here we just get the info from vioapic configuration.
+		 * based on this, we can still have irq storm during guest
+		 * modify the vioapic setting, as it's only for debug uart,
+		 * we want to make it as an known issue.
+		 */
+		if (rte.bits.intr_polarity == IOAPIC_RTE_INTPOL_ALO) {
+			operation = GSI_SET_LOW;
+		} else {
+			operation = GSI_SET_HIGH;
+		}
+
+		vpic_set_irqline(vm_pic(vu->vm), vu->irq, operation);
+		vioapic_set_irqline_lock(vu->vm, vu->irq, operation);
+	}
+}
+
+static void vuart_deassert_intr(const struct acrn_vuart *vu)
+{
+	union ioapic_rte rte;
+	uint32_t operation;
+
+	vioapic_get_rte(vu->vm, vu->irq, &rte);
+
+	if (rte.bits.intr_polarity == IOAPIC_RTE_INTPOL_ALO) {
+		operation = GSI_SET_HIGH;
+	} else {
+		operation = GSI_SET_LOW;
+	}
+
+	vpic_set_irqline(vm_pic(vu->vm), vu->irq, operation);
+	vioapic_set_irqline_lock(vu->vm, vu->irq, operation);
+}
+
 /*
  * Toggle the COM port's intr pin depending on whether or not we have an
  * interrupt condition to report to the processor.
@@ -172,28 +219,14 @@ static struct acrn_vuart *find_vuart_by_port(struct acrn_vm *vm, uint16_t offset
 void vuart_toggle_intr(const struct acrn_vuart *vu)
 {
 	uint8_t intr_reason;
-	union ioapic_rte rte;
-	uint32_t operation;
 
 	intr_reason = vuart_intr_reason(vu);
-	vioapic_get_rte(vu->vm, vu->irq, &rte);
 
-	/* TODO:
-	 * Here should assert vuart irq according to vCOM1_IRQ polarity.
-	 * The best way is to get the polarity info from ACPI table.
-	 * Here we just get the info from vioapic configuration.
-	 * based on this, we can still have irq storm during guest
-	 * modify the vioapic setting, as it's only for debug uart,
-	 * we want to make it as an known issue.
-	 */
-	if (rte.bits.intr_polarity == IOAPIC_RTE_INTPOL_ALO) {
-		operation = (intr_reason != IIR_NOPEND) ? GSI_SET_LOW : GSI_SET_HIGH;
-	} else {
-		operation = (intr_reason != IIR_NOPEND) ? GSI_SET_HIGH : GSI_SET_LOW;
+	if (intr_reason != IIR_NOPEND) {
+		vuart_assert_intr(vu);
+	} else if (vu->port_base != 0U) {
+		vuart_deassert_intr(vu);
 	}
-
-	vpic_set_irqline(vm_pic(vu->vm), vu->irq, operation);
-	vioapic_set_irqline_lock(vu->vm, vu->irq, operation);
 }
 
 static bool send_to_target(struct acrn_vuart *vu, uint8_t value_u8)
