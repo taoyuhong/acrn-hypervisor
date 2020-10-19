@@ -37,8 +37,8 @@
  * BAR0, that most versions of FreeBSD can understand:
  * Siig CyberSerial 1-port.
  */
-#define COM_VENDOR	0x131f
-#define COM_DEV		0x2000
+#define COM_VENDOR	0x9710
+#define COM_DEV		0x9900
 
 static void
 pci_uart_intr_assert(void *arg)
