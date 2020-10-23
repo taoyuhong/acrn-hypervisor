@@ -10,6 +10,7 @@
 #include <logmsg.h>
 #include <vuart-mcs99xx.h>
 #include "vpci_priv.h"
+#include <errno.h>
 
 #define PCIC_SIMPLECOMM 0x07
 
@@ -172,3 +173,52 @@ const struct pci_vdev_ops vuart_pci_ops = {
 	.write_vdev_cfg = write_vuart_pci_vdev_cfg,
 	.read_vdev_cfg = read_vuart_pci_vdev_cfg,
 };
+
+
+int32_t create_vuart_vdev(struct acrn_vm *vm, struct acrn_emul_dev *dev)
+{
+	uint32_t i;
+	struct acrn_vm_config *vm_config = get_vm_config(vm->vm_id);
+	struct acrn_vm_pci_dev_config *dev_config = NULL;
+	int32_t ret = -EINVAL;
+	uint16_t vuart_idx = *((uint16_t*)(dev->args));
+
+	for (i = 0U; i < vm_config->pci_dev_num; i++) {
+		dev_config = &vm_config->pci_devs[i];
+		if ((dev_config->vuart_idx != 0U) && (dev_config->vuart_idx == vuart_idx)) {
+			spinlock_obtain(&vm->vpci.lock);
+			dev_config->vbdf.value = (uint16_t) dev->slot;
+			dev_config->vbar_base[0] = (uint64_t) dev->io_addr[0];
+			dev_config->vbar_base[1] = (uint64_t) dev->io_addr[0];
+			(void) vpci_init_vdev(&vm->vpci, dev_config, NULL);
+			spinlock_release(&vm->vpci.lock);
+			ret = 0;
+			break;
+		}
+	}
+
+	if (ret != 0) {
+		pr_err("Unsupport: create VM%d vuart_idx=%d", vm->vm_id, vuart_idx);
+	}
+
+	return ret;
+}
+
+int32_t destroy_vuart_vdev(struct acrn_vm *vm, struct acrn_emul_dev *dev)
+{
+	struct pci_vdev *vdev;
+	union pci_bdf bdf;
+	int32_t ret = 0;
+
+	bdf.value = (uint16_t) dev->slot;
+	vdev = pci_find_vdev(&vm->vpci, bdf);
+	if (vdev != NULL) {
+		vdev->pci_dev_config->vbdf.value = UNASSIGNED_VBDF;
+		(void)memset(vdev->pci_dev_config->vbar_base, 0U, sizeof(vdev->pci_dev_config->vbar_base));
+	} else {
+		pr_warn("%s, failed to destroy ivshmem device %x:%x.%x\n",
+			__func__, bdf.bits.b, bdf.bits.d, bdf.bits.f);
+		ret = -EINVAL;
+	}
+	return ret;
+}

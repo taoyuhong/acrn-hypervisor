@@ -12,6 +12,8 @@
 
 extern const struct pci_vdev_ops vuart_pci_ops;
 void trigger_vuart_msi(struct pci_vdev *vdev);
+int32_t create_vuart_vdev(struct acrn_vm *vm, struct acrn_emul_dev *dev);
+int32_t destroy_vuart_vdev(struct acrn_vm *vm, struct acrn_emul_dev *dev);
 
 #define pr_vpci(FMT, ...) do { \
 	struct acrn_vm *vm = vpci2vm(vdev->vpci); \

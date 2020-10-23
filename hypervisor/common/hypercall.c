@@ -21,6 +21,7 @@
 #include <ioapic.h>
 #include <mmio_dev.h>
 #include <ivshmem.h>
+#include <vuart-mcs99xx.h>
 
 #define DBG_LEVEL_HYCALL	6U
 
@@ -42,6 +43,7 @@ static struct emul_dev_ops emul_dev_ops_tbl[] = {
 #else
 	{(IVSHMEM_VENDOR_ID | (IVSHMEM_DEVICE_ID << 16U)), NULL, NULL},
 #endif
+	{(COM_VENDOR | (COM_DEV << 16U)), create_vuart_vdev, destroy_vuart_vdev},
 };
 
 bool is_hypercall_from_ring0(void)
