@@ -110,6 +110,36 @@
         <target_vm_id desc="This vuart is used for VM communications. When it is enabled, please specify which target VM that current VM connect to.">1</target_vm_id>
         <target_uart_id desc="target vUART ID that this vuart connects to">1</target_uart_id>
     </communication_vuart>
+    <communication_vuart id="2">
+        <base desc="Communicatin vuart (PCI based) enabling switch. Enable by exposing its base address, disable by returning invalid base address.">PCI_VUART</base>
+        <target_vm_id desc="This vuart is used for VM communications. When it is enabled, please specify which target VM that current VM connect to.">1</target_vm_id>
+        <target_uart_id desc="target vUART ID that this vuart connects to">2</target_uart_id>
+    </communication_vuart>
+    <communication_vuart id="3">
+        <base desc="Communicatin vuart (PCI based) enabling switch. Enable by exposing its base address, disable by returning invalid base address.">PCI_VUART</base>
+        <target_vm_id desc="This vuart is used for VM communications. When it is enabled, please specify which target VM that current VM connect to.">1</target_vm_id>
+        <target_uart_id desc="target vUART ID that this vuart connects to">3</target_uart_id>
+    </communication_vuart>
+    <communication_vuart id="4">
+        <base desc="Communicatin vuart (PCI based) enabling switch. Enable by exposing its base address, disable by returning invalid base address.">PCI_VUART</base>
+        <target_vm_id desc="This vuart is used for VM communications. When it is enabled, please specify which target VM that current VM connect to.">1</target_vm_id>
+        <target_uart_id desc="target vUART ID that this vuart connects to">4</target_uart_id>
+    </communication_vuart>
+    <communication_vuart id="5">
+        <base desc="Communicatin vuart (PCI based) enabling switch. Enable by exposing its base address, disable by returning invalid base address.">PCI_VUART</base>
+        <target_vm_id desc="This vuart is used for VM communications. When it is enabled, please specify which target VM that current VM connect to.">1</target_vm_id>
+        <target_uart_id desc="target vUART ID that this vuart connects to">5</target_uart_id>
+    </communication_vuart>
+    <communication_vuart id="6">
+        <base desc="Communicatin vuart (PCI based) enabling switch. Enable by exposing its base address, disable by returning invalid base address.">PCI_VUART</base>
+        <target_vm_id desc="This vuart is used for VM communications. When it is enabled, please specify which target VM that current VM connect to.">1</target_vm_id>
+        <target_uart_id desc="target vUART ID that this vuart connects to">6</target_uart_id>
+    </communication_vuart>
+    <communication_vuart id="7">
+        <base desc="Communicatin vuart (PCI based) enabling switch. Enable by exposing its base address, disable by returning invalid base address.">PCI_VUART</base>
+        <target_vm_id desc="This vuart is used for VM communications. When it is enabled, please specify which target VM that current VM connect to.">1</target_vm_id>
+        <target_uart_id desc="target vUART ID that this vuart connects to">7</target_uart_id>
+    </communication_vuart>
     <pci_devs desc="pci devices list">
         <pci_dev desc="pci device">00:17.0 SATA controller: Intel Corporation Device a0d3 (rev 20)</pci_dev>
         <pci_dev desc="pci device">00:1e.4 Ethernet controller: Intel Corporation Device a0ac (rev 20)</pci_dev>
@@ -161,6 +191,36 @@
         <base desc="Communicatin vuart (PCI based) enabling switch. Enable by exposing its base address, disable by returning invalid base address.">INVALID_PCI_BASE</base>
         <target_vm_id desc="This vuart is used for VM communications. When it is enabled, please specify which target VM that current VM connect to.">1</target_vm_id>
         <target_uart_id desc="target vUART ID that this vuart connects to">1</target_uart_id>
+    </communication_vuart>
+    <communication_vuart id="2">
+        <base desc="Communicatin vuart (PCI based) enabling switch. Enable by exposing its base address, disable by returning invalid base address.">PCI_VUART</base>
+        <target_vm_id desc="This vuart is used for VM communications. When it is enabled, please specify which target VM that current VM connect to.">0</target_vm_id>
+        <target_uart_id desc="target vUART ID that this vuart connects to">2</target_uart_id>
+    </communication_vuart>
+    <communication_vuart id="3">
+        <base desc="Communicatin vuart (PCI based) enabling switch. Enable by exposing its base address, disable by returning invalid base address.">PCI_VUART</base>
+        <target_vm_id desc="This vuart is used for VM communications. When it is enabled, please specify which target VM that current VM connect to.">0</target_vm_id>
+        <target_uart_id desc="target vUART ID that this vuart connects to">3</target_uart_id>
+    </communication_vuart>
+    <communication_vuart id="4">
+        <base desc="Communicatin vuart (PCI based) enabling switch. Enable by exposing its base address, disable by returning invalid base address.">PCI_VUART</base>
+        <target_vm_id desc="This vuart is used for VM communications. When it is enabled, please specify which target VM that current VM connect to.">0</target_vm_id>
+        <target_uart_id desc="target vUART ID that this vuart connects to">4</target_uart_id>
+    </communication_vuart>
+    <communication_vuart id="5">
+        <base desc="Communicatin vuart (PCI based) enabling switch. Enable by exposing its base address, disable by returning invalid base address.">PCI_VUART</base>
+        <target_vm_id desc="This vuart is used for VM communications. When it is enabled, please specify which target VM that current VM connect to.">0</target_vm_id>
+        <target_uart_id desc="target vUART ID that this vuart connects to">5</target_uart_id>
+    </communication_vuart>
+    <communication_vuart id="6">
+        <base desc="Communicatin vuart (PCI based) enabling switch. Enable by exposing its base address, disable by returning invalid base address.">PCI_VUART</base>
+        <target_vm_id desc="This vuart is used for VM communications. When it is enabled, please specify which target VM that current VM connect to.">0</target_vm_id>
+        <target_uart_id desc="target vUART ID that this vuart connects to">6</target_uart_id>
+    </communication_vuart>
+    <communication_vuart id="7">
+        <base desc="Communicatin vuart (PCI based) enabling switch. Enable by exposing its base address, disable by returning invalid base address.">PCI_VUART</base>
+        <target_vm_id desc="This vuart is used for VM communications. When it is enabled, please specify which target VM that current VM connect to.">0</target_vm_id>
+        <target_uart_id desc="target vUART ID that this vuart connects to">7</target_uart_id>
     </communication_vuart>
     <pci_devs configurable="0" desc="pci devices list">
         <pci_dev desc="pci device"></pci_dev>
