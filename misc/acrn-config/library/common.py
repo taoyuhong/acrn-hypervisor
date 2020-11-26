@@ -36,7 +36,7 @@ LAUNCH_INFO_FILE = ""
 VM_TYPES = {}
 MAX_VM_NUM = 8
 
-MAX_VUART_NUM = 8
+MAX_VUART_NUM = 16
 
 class MultiItem():
 
