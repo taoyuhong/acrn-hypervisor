@@ -259,7 +259,7 @@ static void prepare_prelaunched_vm_memmap(struct acrn_vm *vm, const struct acrn_
 	bool is_hpa1 = true;
 	uint64_t base_hpa = vm_config->memory.start_hpa;
 	uint64_t remaining_hpa_size = vm_config->memory.size;
-	uint32_t i;
+	uint32_t i, j;
 
 	for (i = 0U; i < vm->e820_entry_num; i++) {
 		const struct e820_entry *entry = &(vm->e820_entries[i]);
@@ -306,7 +306,9 @@ static void prepare_prelaunched_vm_memmap(struct acrn_vm *vm, const struct acrn_
 	}
 
 	for (i = 0U; i < MAX_MMIO_DEV_NUM; i++) {
-		(void)assign_mmio_dev(vm, &vm_config->mmiodevs[i]);
+		for (j = 0; j < MMIODEV_RES_NUM; j++) {
+			(void)assign_mmio_dev(vm, &vm_config->mmiodevs[i].mmiores[j]);
+		}
 
 #ifdef P2SB_VGPIO_DM_ENABLED
 		if ((vm_config->pt_p2sb_bar) && (vm_config->mmiodevs[i].base_hpa == P2SB_BAR_ADDR)) {
@@ -395,7 +397,7 @@ static void deny_hv_owned_devices(struct acrn_vm *sos)
 static void prepare_sos_vm_memmap(struct acrn_vm *vm)
 {
 	uint16_t vm_id;
-	uint32_t i;
+	uint32_t i, j;
 	uint64_t hv_hpa;
 	uint64_t sos_high64_max_ram = MEM_4G;
 	struct acrn_vm_config *vm_config;
@@ -452,7 +454,9 @@ static void prepare_sos_vm_memmap(struct acrn_vm *vm)
 		}
 
 		for (i = 0U; i < MAX_MMIO_DEV_NUM; i++) {
-			(void)deassign_mmio_dev(vm, &vm_config->mmiodevs[i]);
+			for (j = 0; j < MMIODEV_RES_NUM; j++) {
+				(void)deassign_mmio_dev(vm, &vm_config->mmiodevs[i].mmiores[j]);
+			}
 		}
 	}
 
