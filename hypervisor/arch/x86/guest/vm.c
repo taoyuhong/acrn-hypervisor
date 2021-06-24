@@ -43,6 +43,7 @@
 #define CONFIG_QUIRKS_ENABLED
 #ifdef CONFIG_QUIRKS_ENABLED
 #include <quirks/smbios.h>
+#include <quirk.h>
 #endif
 
 /* Local variables */
@@ -259,7 +260,7 @@ static void prepare_prelaunched_vm_memmap(struct acrn_vm *vm, const struct acrn_
 	bool is_hpa1 = true;
 	uint64_t base_hpa = vm_config->memory.start_hpa;
 	uint64_t remaining_hpa_size = vm_config->memory.size;
-	uint32_t i, j;
+	uint32_t i;
 
 	for (i = 0U; i < vm->e820_entry_num; i++) {
 		const struct e820_entry *entry = &(vm->e820_entries[i]);
@@ -303,18 +304,6 @@ static void prepare_prelaunched_vm_memmap(struct acrn_vm *vm, const struct acrn_
 			base_hpa = vm_config->memory.start_hpa2;
 			remaining_hpa_size = vm_config->memory.size_hpa2;
 		}
-	}
-
-	for (i = 0U; i < MAX_MMIO_DEV_NUM; i++) {
-		for (j = 0; j < MMIODEV_RES_NUM; j++) {
-			(void)assign_mmio_dev(vm, &vm_config->mmiodevs[i].mmiores[j]);
-		}
-
-#ifdef P2SB_VGPIO_DM_ENABLED
-		if ((vm_config->pt_p2sb_bar) && (vm_config->mmiodevs[i].base_hpa == P2SB_BAR_ADDR)) {
-			register_vgpio_handler(vm, &vm_config->mmiodevs[i]);
-		}
-#endif
 	}
 }
 
@@ -915,13 +904,26 @@ void prepare_vm(uint16_t vm_id, struct acrn_vm_config *vm_config)
 {
 	int32_t err = 0;
 	struct acrn_vm *vm = NULL;
+	uint32_t i,j;
 
 	/* SOS and pre-launched VMs launch on all pCPUs defined in vm_config->cpu_affinity */
 	err = create_vm(vm_id, vm_config->cpu_affinity, vm_config, &vm);
+	acrn_vm_fixup(vm);
 
 	if (err == 0) {
 		if (is_prelaunched_vm(vm)) {
 			build_vrsdp(vm);
+			for (i = 0U; i < MAX_MMIO_DEV_NUM; i++) {
+				for (j = 0; j < MMIODEV_RES_NUM; j++) {
+					(void)assign_mmio_dev(vm, &vm_config->mmiodevs[i].mmiores[j]);
+				}
+
+#ifdef P2SB_VGPIO_DM_ENABLED
+				if ((vm_config->pt_p2sb_bar) && (vm_config->mmiodevs[i].base_hpa == P2SB_BAR_ADDR)) {
+					register_vgpio_handler(vm, &vm_config->mmiodevs[i]);
+				}
+#endif
+			}
 		}
 
 		if (is_sos_vm(vm)) {

@@ -290,6 +290,7 @@ VP_BASE_C_SRCS += common/hv_main.c
 VP_BASE_C_SRCS += common/vm_load.c
 VP_BASE_C_SRCS += arch/x86/configs/pci_dev.c
 VP_BASE_C_SRCS += arch/x86/configs/vacpi.c
+VP_BASE_C_SRCS += quirk/acrn_vm_fixup.c
 
 # ifeq ($(CONFIG_QUIRKS_ENABLED),y)
 VP_BASE_C_SRCS += quirks/smbios.c
