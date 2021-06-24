@@ -18,6 +18,7 @@
 #include <logmsg.h>
 #include <vboot_info.h>
 #include <vacpi.h>
+#include <quirk.h>
 
 #define DBG_LEVEL_BOOT	6U
 
@@ -267,6 +268,7 @@ int32_t init_vm_boot_info(struct acrn_vm *vm)
 		panic("no multiboot module info found");
 	} else {
 		ret = init_vm_sw_load(vm, mbi);
+		vm_info_fixup(vm);
 	}
 	clac();
 

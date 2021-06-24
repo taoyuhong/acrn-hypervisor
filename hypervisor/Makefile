@@ -287,6 +287,7 @@ VP_BASE_C_SRCS += common/hv_main.c
 VP_BASE_C_SRCS += common/vm_load.c
 VP_BASE_C_SRCS += arch/x86/configs/pci_dev.c
 VP_BASE_C_SRCS += arch/x86/configs/vacpi.c
+VP_BASE_C_SRCS += quirk/vm_info_fixup.c
 
 # ifeq ($(CONFIG_QUIRKS_ENABLED),y)
 # RFC: Should we create another category: QUIRKS_C_SRC?
