@@ -39,6 +39,7 @@
 #include <asm/rtcm.h>
 #include <asm/irq.h>
 #include <uart16550.h>
+#include <quirk.h>
 
 /* Local variables */
 
@@ -901,6 +902,8 @@ void prepare_vm(uint16_t vm_id, struct acrn_vm_config *vm_config)
 	err = create_vm(vm_id, vm_config->cpu_affinity, vm_config, &vm);
 
 	if (err == 0) {
+		acrn_vm_fixup(vm);
+
 		if (is_prelaunched_vm(vm)) {
 			build_vrsdp(vm);
 		}
