@@ -244,6 +244,9 @@
       <xsl:value-of select="acrn:initializer('base_hpa', 'VM0_TPM_BUFFER_BASE_ADDR')" />
       <xsl:value-of select="acrn:initializer('size', 'VM0_TPM_BUFFER_SIZE')" />
       <xsl:text>},</xsl:text>
+      <xsl:value-of select="acrn:initializer('mmiores[1]', '{', true())" />
+      <xsl:value-of select="acrn:initializer('base_gpa', '0x40890000U')" />
+      <xsl:text>},</xsl:text>
       <xsl:text>},</xsl:text>
       <xsl:value-of select="$newline" />
       <xsl:value-of select="$endif" />
