@@ -10,6 +10,7 @@
 #include <asm/pgtable.h>
 #include <asm/guest/vm.h>
 #include <asm/guest/ept.h>
+#include <debug/logmsg.h>
 
 int32_t assign_mmio_dev(struct acrn_vm *vm, const struct acrn_mmiores *res)
 {
@@ -21,7 +22,10 @@ int32_t assign_mmio_dev(struct acrn_vm *vm, const struct acrn_mmiores *res)
 		ept_add_mr(vm, (uint64_t *)vm->arch_vm.nworld_eptp, res->base_hpa,
 				is_sos_vm(vm) ? res->base_hpa : res->base_gpa,
 				res->size, EPT_RWX | EPT_UNCACHED);
+		pr_err("%s hpa:%llx gpa:%llx size:%llx", __FUNCTION__, res->base_hpa, res->base_gpa, res->size);
 		ret = 0;
+	} else {
+		pr_err("%s don't map hpa:%llx gpa:%llx size:%llx", __FUNCTION__, res->base_hpa, res->base_gpa, res->size);
 	}
 
 	return ret;
